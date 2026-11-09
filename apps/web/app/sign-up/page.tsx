@@ -24,16 +24,26 @@ export default function SignUp() {
     if (password.length < 8) return setError("Use at least 8 characters for your password.");
     if (password !== f.get("confirm")) return setError("The passwords don’t match.");
     setBusy(true); setError("");
-    const { error } = await supabase.auth.signUp({
-      email: String(f.get("email")),
+    const { data, error } = await supabase.auth.signUp({
+      email: String(f.get("email")).trim(),
       password,
-      options: { data: { role: f.get("role"), full_name: `${f.get("first")} ${f.get("last")}`.trim(), phone: f.get("phone") } },
+      options: {
+        emailRedirectTo: `${window.location.origin}/sign-in`,
+        data: { role: f.get("role"), full_name: `${f.get("first")} ${f.get("last")}`.trim(), phone: f.get("phone") },
+      },
     });
     setBusy(false);
-    if (error) setError(error.message); else setOk(true);
+    if (error) {
+      if (error.status === 429) return setError("We’ve sent too many emails just now. Please try again in a while.");
+      if (error.code === "weak_password") return setError("Please choose a stronger password.");
+      return setError("We couldn’t create your account. Please check your details and try again.");
+    }
+    if (data.session) { window.location.href = "/dashboard"; return; }
+    if (data.user && data.user.identities?.length === 0) return setError("An account with this email already exists. Please sign in.");
+    setOk(true);
   }
 
-  if (ok) return <AuthShell title="Check your email" intro="We’ve sent a link to confirm your account."><span /></AuthShell>;
+  if (ok) return <AuthShell title="Check your email" intro="We’ve sent a link to confirm your account. Check your spam folder too, then come back and sign in."><Link className="btn btn-blue" href="/sign-in">Go to sign in</Link></AuthShell>;
 
   return (
     <AuthShell title="Sign up" intro="Sign up to enjoy the features of Brand Collaborator">

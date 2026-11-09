@@ -1,9 +1,13 @@
 {
   "name": "brand-collaborator",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev:web": "npm run dev -w web",
-    "build:web": "npm run build -w web"
+    "build:web": "npm run build -w web",
+    "dev:admin": "npm run dev -w admin",
+    "build:admin": "npm run build -w admin"
   }
 }
