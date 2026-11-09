@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { photos } from "@/lib/photos";
 
 const roles = [
-  { t: "Sign Up as a Brand", d: "Connect with top talent to bring your projects to life. Discover skilled professionals who can turn your vision into reality and elevate your brand.", h: "/brands" },
-  { t: "Join as a Creator", d: "Showcase your unique skills to attract exciting opportunities. Connect with brands looking for your expertise and elevate your career.", h: "/creators" },
-  { t: "Join as a Freelancer", d: "Offer your expertise and collaborate with brands seeking your services. Join our platform to engage in projects that showcase your skills and expand your network.", h: "/freelancers" },
+  { t: "Sign Up as a Brand", d: "Connect with top talent to bring your projects to life. Discover skilled professionals who can turn your vision into reality and elevate your brand.", h: "/brands", img: photos.roleBrand },
+  { t: "Join as a Creator", d: "Showcase your unique skills to attract exciting opportunities. Connect with brands looking for your expertise and elevate your career.", h: "/creators", img: photos.roleCreator },
+  { t: "Join as a Freelancer", d: "Offer your expertise and collaborate with brands seeking your services. Join our platform to engage in projects that showcase your skills and expand your network.", h: "/freelancers", img: photos.roleFreelancer },
 ];
 const stats = [["50+", "Global Reach"], ["2k+", "Skilled Tech Freelancers"], ["3k+", "UGC Creators"], ["80%", "Saved Capital"]];
 
@@ -14,7 +15,7 @@ export default function Home() {
     <>
       <Nav />
       <main>
-        <section className="hero">
+        <section className="hero" style={{ backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.5), rgba(0,0,0,.5)), url("${photos.hero}")`, backgroundSize: "cover", backgroundPosition: "center" }}>
           <div>
             <h1>Create, Connect<br />and Collaborate.</h1>
             <p>Unlock opportunities for brand collaborations on our platform. Whether you’re a brand seeking talent or a creative looking for better prospects, Brand Collaborator connects you to success. Experience seamless partnerships and enhanced campaigns.</p>
@@ -33,7 +34,7 @@ export default function Home() {
             <p>Brand Collaborator bridges the gap between businesses and creative talent—content creators, influencers, and freelancers—by simplifying the hiring process. Our platform provides a centralized hub for seamless collaboration, managing transactions and payments to ensure smooth project completion. Additionally, we empower talent through partnerships with online schools, offering courses to help them upskill and stay competitive in the evolving digital landscape. With a focus on fostering meaningful collaborations, we drive impactful campaigns and shared success for both brands and talent.</p>
             <Link className="link" href="/why-bc">Learn More ↗</Link>
           </div>
-          <div className="ph" style={{ height: 510 }} />
+          <img className="ph" style={{ height: 510 }} src={photos.about} alt="A woman with braids working on a laptop" />
         </section>
 
         <section className="section" id="solutions">
@@ -43,7 +44,7 @@ export default function Home() {
           <div className="cards">
             {roles.map((r) => (
               <article className="card" key={r.t}>
-                <div className="icon ph" />
+                <img className="icon ph" src={r.img} alt="" />
                 <h3>{r.t}</h3>
                 <div>{r.d}</div>
                 <Link className="link" href={r.h}>Learn More ↗</Link>
@@ -54,14 +55,14 @@ export default function Home() {
 
         <section className="section">
           <h2 style={{ textAlign: "center" }}>Top Content Creators</h2>
-          <div className="creators">{[0, 1, 2, 3].map((i) => <div className="ph" key={i} />)}</div>
+          <div className="creators">{photos.creators.map((src) => <img className="ph" key={src} src={src} alt="A content creator at work" />)}</div>
         </section>
 
         <section className="section">
           <span className="pill">How It Works</span>
           <h2 style={{ marginTop: 30, maxWidth: 662 }}>Discover How Our Platform Enhances Collaboration</h2>
           <div className="two" style={{ marginTop: 50 }}>
-            <div className="ph" style={{ height: 628 }} />
+            <img className="ph" style={{ height: 628 }} src={photos.how} alt="A team collaborating around a table" />
             <div>
               <div className="step on"><h3>Register Your Brand</h3><p>Sign up today to connect with top creators and streamline your marketing efforts. Unlock new collaboration opportunities for your brand.</p></div>
               <div className="step"><h3>Browse and Hire Talent</h3><p>Explore a diverse pool of skilled creators and freelancers. Easily find the perfect match for your project needs to ensure a successful collaboration</p></div>
@@ -78,7 +79,7 @@ export default function Home() {
             <div className="faq"><h3>Quality work done quickly</h3></div>
             <div className="faq"><h3>Protected payments, every time</h3></div>
           </div>
-          <div className="ph" style={{ height: 655 }} />
+          <img className="ph" style={{ height: 655 }} src={photos.talent} alt="A man working on a laptop at a table" />
         </section>
 
         <section className="cta">

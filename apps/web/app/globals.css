@@ -67,3 +67,17 @@ input, select { font: inherit; padding: 16px; border: 1px solid var(--line); bor
   .foot-grid { grid-template-columns: 1fr 1fr; }
   .auth h1 { margin-top: 48px; }
 }
+img.ph { display: block; width: 100%; object-fit: cover; background: var(--blue-light); }
+.hero-sub { min-height: 794px; padding-top: 300px; background-size: cover; background-position: center; justify-content: flex-start; }
+.hero-short { min-height: 380px; padding-top: 170px; }
+.hero-short p { margin-bottom: 0; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 19px; margin-top: 50px; }
+.plan { background: #fff; gap: 18px; text-align: left; }
+.plan .btn { margin-top: auto; }
+.price { font-size: 36px; line-height: 43px; font-weight: 600; color: var(--blue); }
+.two-cards { grid-template-columns: repeat(2, minmax(0, 420px)); }
+textarea { font: inherit; padding: 16px; border: 1px solid var(--line); border-radius: 5px; width: 100%; resize: vertical; }
+.contact-form { display: grid; gap: 24px; }
+.contact-form label { display: grid; gap: 8px; }
+.photo-credit { font-size: 12px; margin: 16px 0 0; opacity: .7; }
+@media (max-width: 900px) { .steps, .two-cards { grid-template-columns: 1fr; } .hero-sub { min-height: 0; padding-top: 140px; } .hero-short { padding-top: 130px; } }

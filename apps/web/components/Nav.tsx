@@ -6,9 +6,9 @@ export function Nav() {
       <div className="nav-links">
         <Link href="/" className="wordmark" style={{ padding: 0, marginRight: 27 }}>brand<br />collaborator</Link>
         <Link href="/why-bc">Why BC?</Link>
-        <Link href="/#solutions">Solutions</Link>
+        <Link href="/brands">Solutions</Link>
         <Link href="/talent">Talent</Link>
-        <Link href="/#faq">Resources</Link>
+        <Link href="/brands#pricing">Pricing</Link>
         <Link href="/contact">Contact Us</Link>
       </div>
       <div className="nav-actions">

@@ -42,6 +42,7 @@ export function Footer() {
         <div><h4>Resources</h4><Link href="/#faq">FAQ</Link><Link href="/#testimonials">Testimonial</Link></div>
       </div>
       <div className="legal"><Link href="/terms">Terms of Service</Link><Link href="/privacy">Privacy Policy</Link><Link href="/security">Security</Link></div>
+      <p className="photo-credit">Photos from <a href="https://unsplash.com" rel="noreferrer">Unsplash</a></p>
     </footer>
   );
 }

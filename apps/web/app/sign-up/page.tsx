@@ -1,12 +1,18 @@
 "use client";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function SignUp() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [role, setRole] = useState("brand");
+
+  useEffect(() => {
+    const r = new URLSearchParams(window.location.search).get("role");
+    if (r === "brand" || r === "creator" || r === "freelancer") setRole(r);
+  }, []);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -33,7 +39,7 @@ export default function SignUp() {
       <p>Sign up to enjoy the features of Brand Collaborator</p>
       <form onSubmit={submit}>
         <label>I am joining as a
-          <select name="role" defaultValue="brand">
+          <select name="role" value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="brand">Brand</option><option value="creator">UGC Creator</option><option value="freelancer">Freelancer</option>
           </select>
         </label>

@@ -1,0 +1,15 @@
+const u = (id: string, w = 1400) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=75&w=${w}`;
+
+export const photos = {
+  hero: u("1662962066559-f9d257775a27", 2000),
+  about: u("1604933762021-54a5858c9832"),
+  how: u("1690192079218-fe6dce1486c0"),
+  talent: u("1718968924529-3f169a8666ca"),
+  creators: ["1587155470621-3f8754bc3532", "1628093362535-d05cf572504c", "1631248621222-64bba871dc23", "1621609764180-2ca554a9d6f2"].map((i) => u(i, 700)),
+  brand: u("1791487867119-2d7cd0d0e727", 2000),
+  creator: u("1614606290414-41c139b5fae9", 2000),
+  freelancer: u("1613980790147-f4f449df0dd9", 2000),
+  roleBrand: u("1604933762021-54a5858c9832", 200),
+  roleCreator: u("1587155470621-3f8754bc3532", 200),
+  roleFreelancer: u("1744686909434-fd158fca1c35", 200),
+};
