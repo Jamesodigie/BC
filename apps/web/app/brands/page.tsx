@@ -17,6 +17,7 @@ const steps = [
 export default function Brands() {
   return (
     <AudiencePage
+      images={[photos.roleBrand, photos.roleCreator, photos.roleFreelancer]}
       photo={photos.brand}
       title="Elevate Your Brand with Top Talents and Creators"
       intro="Discover, hire, and seamlessly collaborate with top-tier creators and professional teams, perfectly tailored to meet your unique project and business requirements."

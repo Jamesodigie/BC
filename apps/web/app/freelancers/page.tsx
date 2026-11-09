@@ -5,6 +5,7 @@ import { photos } from "@/lib/photos";
 export default function Page() {
   return (
     <AudiencePage
+      images={[photos.roleBrand, photos.roleCreator, photos.roleFreelancer]}
       photo={photos.freelancer}
       title="Turn Your Skills into Opportunities"
       intro="Join a dynamic platform that bridges the gap between skilled freelancers and top brands, helping you connect, collaborate, and grow your career effortlessly."

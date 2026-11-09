@@ -39,9 +39,9 @@ export function Footer() {
         </div>
         <div><h4>Company</h4><Link href="/why-bc">Why BC?</Link><Link href="/talent">Talent</Link><Link href="/contact">Contact us</Link></div>
         <div><h4>Solutions</h4><Link href="/brands">For Brands</Link><Link href="/freelancers">For Freelancers</Link><Link href="/creators">For Creators</Link></div>
-        <div><h4>Resources</h4><Link href="/#faq">FAQ</Link><Link href="/#testimonials">Testimonial</Link></div>
+        <div><h4>Resources</h4><Link href="/#faq">FAQ</Link><Link href="/live-chat">Live Chat</Link><Link href="/brands#pricing">Pricing</Link></div>
       </div>
-      <div className="legal"><Link href="/terms">Terms of Service</Link><Link href="/privacy">Privacy Policy</Link><Link href="/security">Security</Link></div>
+      <div className="legal"><Link href="/terms">Terms of Service</Link><Link href="/privacy">Privacy Policy</Link><Link href="/user-agreement">User Agreement</Link><Link href="/refund">Refund Policy</Link><Link href="/security">Security</Link></div>
       <p className="photo-credit">Photos from <a href="https://unsplash.com" rel="noreferrer">Unsplash</a></p>
     </footer>
   );

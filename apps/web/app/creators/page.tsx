@@ -5,6 +5,7 @@ import { photos } from "@/lib/photos";
 export default function Page() {
   return (
     <AudiencePage
+      images={[photos.roleBrand, photos.roleCreator, photos.roleFreelancer]}
       photo={photos.creator}
       title="Create Content Brands Love"
       intro="Join a platform that connects authentic UGC creators with brands looking for your voice, and get paid for the content you make."

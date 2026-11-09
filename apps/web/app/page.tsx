@@ -20,11 +20,11 @@ export default function Home() {
             <h1>Create, Connect<br />and Collaborate.</h1>
             <p>Unlock opportunities for brand collaborations on our platform. Whether you’re a brand seeking talent or a creative looking for better prospects, Brand Collaborator connects you to success. Experience seamless partnerships and enhanced campaigns.</p>
             <div className="hero-actions">
-              <Link className="btn btn-white" href="/sign-up">Get Started</Link>
+              <Link className="btn btn-white" href="/get-started">Get Started</Link>
               <Link className="btn" href="/why-bc">Learn More ↗</Link>
             </div>
           </div>
-          <div className="stats">{stats.map(([n, l]) => <div key={l}><strong>{n}</strong>{l}</div>)}</div>
+          <div className="stats">{stats.map(([n, l], i) => <div key={l}>{(i === 1 || i === 2) && <div className="avatars">{photos.creators.map((src) => <img key={src} src={src} alt="" />)}</div>}<strong>{n}</strong>{l}</div>)}</div>
         </section>
 
         <section className="section two">
@@ -82,10 +82,11 @@ export default function Home() {
           <img className="ph" style={{ height: 655 }} src={photos.talent} alt="A man working on a laptop at a table" />
         </section>
 
-        <section className="cta">
-          <h2 style={{ maxWidth: 563 }}>Are You Ready to Transform Your Brand?</h2>
+        <section className="cta cta-photo">
+          <div><h2 style={{ maxWidth: 563 }}>Are You Ready to Transform Your Brand?</h2>
           <p>Start your journey with top creators and unlock new possibilities.</p>
-          <Link className="btn btn-white" href="/sign-up">Get Started</Link>
+          <Link className="btn btn-white" href="/get-started">Get Started</Link></div>
+          <img className="ph" src={photos.brand} alt="" />
         </section>
       </main>
       <Footer />
