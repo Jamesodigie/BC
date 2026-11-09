@@ -18,7 +18,7 @@ export default function Home() {
         <section className="hero" style={{ backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.5), rgba(0,0,0,.5)), url("${photos.hero}")`, backgroundSize: "cover", backgroundPosition: "center" }}>
           <div>
             <h1>Create, Connect<br />and Collaborate.</h1>
-            <p>Unlock opportunities for brand collaborations on our platform. Whether you’re a brand seeking talent or a creative looking for better prospects, Brand Collaborator connects you to success. Experience seamless partnerships and enhanced campaigns.</p>
+            <p>Unlock opportunities for brand collaborations on our platform. <span className="more">Whether you’re a brand seeking talent or a creative looking for better prospects, Brand Collaborator connects you to success. Experience seamless partnerships and enhanced campaigns.</span></p>
             <div className="hero-actions">
               <Link className="btn btn-white" href="/get-started">Get Started</Link>
               <Link className="btn" href="/why-bc">Learn More ↗</Link>
@@ -31,7 +31,7 @@ export default function Home() {
           <div>
             <span className="pill">About Us</span>
             <h2 style={{ marginTop: 30 }}>Where Brands and Talent Connect</h2>
-            <p>Brand Collaborator bridges the gap between businesses and creative talent—content creators, influencers, and freelancers—by simplifying the hiring process. Our platform provides a centralized hub for seamless collaboration, managing transactions and payments to ensure smooth project completion. Additionally, we empower talent through partnerships with online schools, offering courses to help them upskill and stay competitive in the evolving digital landscape. With a focus on fostering meaningful collaborations, we drive impactful campaigns and shared success for both brands and talent.</p>
+            <p>Brand Collaborator bridges the gap between businesses and creative talent—content creators, influencers, and freelancers—by simplifying the hiring process. <span className="more">Our platform provides a centralized hub for seamless collaboration, managing transactions and payments to ensure smooth project completion. Additionally, we empower talent through partnerships with online schools, offering courses to help them upskill and stay competitive in the evolving digital landscape. With a focus on fostering meaningful collaborations, we drive impactful campaigns and shared success for both brands and talent.</span></p>
             <Link className="link" href="/why-bc">Learn More ↗</Link>
           </div>
           <img className="ph" style={{ height: 510 }} src={photos.about} alt="A woman with braids working on a laptop" />

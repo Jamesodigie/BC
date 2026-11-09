@@ -153,8 +153,65 @@ textarea { font: inherit; padding: 16px; border: 1px solid var(--line); border-r
   .stats strong { font-size: 28px; line-height: 34px; }
   .nav-actions .btn { padding: 11px 16px; }
 }
-@media (max-width: 420px) { .role-picker { grid-template-columns: 1fr; } .foot-grid { grid-template-columns: 1fr; } .chat-form .btn { padding: 12px 16px; } }
+
 body { overflow-wrap: break-word; }
 a.link, .doc p { overflow-wrap: anywhere; }
 .doc { grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 900px) { .two, .cards, .stats, .creators { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); } .two, .cards { grid-template-columns: minmax(0, 1fr); } .stats, .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats { gap: 16px; font-size: 14px; } }
+/* Cleaner type and spacing */
+:root { --muted: #4a5b66; }
+.section p, .card > div, .step p, .faq p { color: var(--muted); }
+.cta p, .hero p { color: inherit; }
+.card { border-color: #e4ebee; }
+.hero { isolation: isolate; }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(10,20,26,.45), rgba(10,20,26,0) 75%); }
+.nf { min-height: 100vh; display: grid; place-content: center; justify-items: center; text-align: center; padding: 24px 16px; gap: 8px; }
+.nf h1 { font-size: 32px; }
+@media (max-width: 640px) {
+  body { font-size: 15px; line-height: 23px; }
+  h1 { font-size: 32px; line-height: 1.18; }
+  h2 { font-size: 24px; line-height: 1.25; }
+  h3 { font-size: 17px; }
+  .more { display: none; }
+  .btn { padding: 12px 20px; font-size: 15px; line-height: 22px; }
+  .pill { font-size: 12px; padding: 4px 10px; line-height: 18px; }
+  .nav { padding: 12px 16px; }
+  .nav-actions .btn-white { display: none; }
+  .burger { width: 40px; height: 40px; font-size: 18px; }
+  .hero, .hero-sub { min-height: 0; padding: 92px 16px 24px; gap: 28px; }
+  .hero::before { background: linear-gradient(180deg, rgba(10,20,26,.5), rgba(10,20,26,.72)); }
+  .hero-short { padding: 92px 16px 32px; }
+  .hero p { font-size: 15px; line-height: 23px; font-weight: 400; margin: 12px 0 20px; }
+  .hero-short p { margin-bottom: 0; }
+  .stats { padding: 14px 16px; gap: 14px 12px; font-size: 13px; line-height: 18px; background: rgba(255,255,255,.16); }
+  .stats strong { font-size: 22px; line-height: 28px; }
+  .avatars { display: none; }
+  .section { padding: 36px 16px; }
+  .two { gap: 22px; }
+  .two p, .section > p { margin: 10px 0; }
+  .cards { gap: 12px; margin-top: 22px; }
+  .card { padding: 18px; gap: 6px; }
+  .card .icon { width: 48px; height: 48px; margin-bottom: 8px; }
+  .creators { gap: 8px; margin-top: 22px; }
+  .creators .ph { height: 190px; border-radius: 12px; }
+  img.ph[style] { aspect-ratio: 16 / 10; border-radius: 14px; }
+  .step { padding: 12px 14px; } .faq { padding: 12px 14px; }
+  .step p, .faq p { font-size: 15px; line-height: 23px; margin-top: 6px; }
+  .price { font-size: 26px; line-height: 32px; }
+  .cta { padding: 36px 16px; }
+  .cta p { margin: 6px 0 18px; }
+  .cta-photo { gap: 18px; }
+  .cta-photo img.ph { height: 170px; border-radius: 14px; }
+  .footer { padding: 32px 16px; }
+  .news { padding-bottom: 24px; gap: 14px; }
+  .foot-grid { padding: 24px 0; gap: 16px; grid-template-columns: 1fr 1fr; }
+  .foot-grid > div:first-child { grid-column: 1 / -1; }
+  .foot-grid h4 { margin-bottom: 10px; }
+  .foot-grid a { margin-bottom: 8px; }
+  .legal { gap: 10px 20px; padding-top: 18px; font-size: 13px; }
+  input, select, textarea { padding: 12px 14px; font-size: 16px; }
+  .auth-split .auth form { gap: 16px; margin-top: 18px; }
+  .role { padding: 11px 6px; font-size: 13px; line-height: 18px; }
+  .collage { height: 130px; }
+  .role-picker { grid-template-columns: repeat(3, 1fr); }
+}
