@@ -2,6 +2,9 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
+import { AuthShell } from "@/components/AuthShell";
+
+const roles = [["brand", "Brand", "role-brand"], ["creator", "UGC Creator", "role-creator"], ["freelancer", "Freelancer", "role-freelancer"]];
 
 export default function SignUp() {
   const [error, setError] = useState("");
@@ -30,19 +33,19 @@ export default function SignUp() {
     if (error) setError(error.message); else setOk(true);
   }
 
-  if (ok) return <main className="auth"><h1>Check your email</h1><p>We’ve sent a link to confirm your account.</p></main>;
+  if (ok) return <AuthShell title="Check your email" intro="We’ve sent a link to confirm your account."><span /></AuthShell>;
 
   return (
-    <main className="auth">
-      <Link href="/" className="wordmark" style={{ color: "var(--blue)" }}>brand<br />collaborator</Link>
-      <h1>Sign up</h1>
-      <p>Sign up to enjoy the features of Brand Collaborator</p>
+    <AuthShell title="Sign up" intro="Sign up to enjoy the features of Brand Collaborator">
       <form onSubmit={submit}>
-        <label>I am joining as a
-          <select name="role" value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="brand">Brand</option><option value="creator">UGC Creator</option><option value="freelancer">Freelancer</option>
-          </select>
-        </label>
+        <fieldset className="role-picker">
+          <legend>I am joining as a</legend>
+          {roles.map(([v, l, c]) => (
+            <label className={`role ${c}`} key={v}>
+              <input type="radio" name="role" value={v} checked={role === v} onChange={() => setRole(v)} />{l}
+            </label>
+          ))}
+        </fieldset>
         <label>First name<input name="first" required autoComplete="given-name" /></label>
         <label>Last name<input name="last" required autoComplete="family-name" /></label>
         <label>Email<input name="email" type="email" required autoComplete="email" /></label>
@@ -53,6 +56,6 @@ export default function SignUp() {
         <button className="btn btn-blue" disabled={busy}>{busy ? "Creating account…" : "Sign up"}</button>
       </form>
       <p>Already have an account with Brand Collaborator? <Link className="link" href="/sign-in">Sign in</Link></p>
-    </main>
+    </AuthShell>
   );
 }

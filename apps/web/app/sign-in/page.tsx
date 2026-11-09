@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
+import { AuthShell } from "@/components/AuthShell";
 
 export default function SignIn() {
   const [error, setError] = useState("");
@@ -18,10 +19,7 @@ export default function SignIn() {
   }
 
   return (
-    <main className="auth">
-      <Link href="/" className="wordmark" style={{ color: "var(--blue)" }}>brand<br />collaborator</Link>
-      <h1>Sign In</h1>
-      <p>Sign in to enjoy the features of Brand Collaborator</p>
+    <AuthShell title="Sign In" intro="Sign in to enjoy the features of Brand Collaborator">
       <form onSubmit={submit}>
         <label>Email<input name="email" type="email" required autoComplete="email" /></label>
         <label>Password<input name="password" type="password" required autoComplete="current-password" /></label>
@@ -30,6 +28,6 @@ export default function SignIn() {
         <button className="btn btn-blue" disabled={busy}>{busy ? "Signing in…" : "Sign In"}</button>
       </form>
       <p>Don’t have an account with Brand Collaborator? <Link className="link" href="/sign-up">Sign up</Link></p>
-    </main>
+    </AuthShell>
   );
 }
