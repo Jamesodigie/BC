@@ -3,10 +3,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { InstallApp } from "@/lib/dash";
-import { Alerts, BrandHome, FindTalent, Earnings, HireTeam, Jobs, Messages, Profile, Projects, Services, Settings, TalentHome } from "./views";
+import { Alerts, BrandHome, CreatorHome, Earnings, FindCreators, FindFreelancers, FreelancerHome, HireTeam, Jobs, Messages, Payments, Pricing, Profile, Projects, Services, Settings, Videos } from "./views";
 
-const brandTabs = [["home", "Overview"], ["find", "Find Talent"], ["projects", "Projects"], ["team", "Hire a Team"], ["messages", "Messages"], ["alerts", "Alerts"], ["settings", "Settings"]];
-const talentTabs = [["home", "Overview"], ["jobs", "Jobs"], ["profile", "Portfolio"], ["services", "Services"], ["earnings", "Earnings"], ["messages", "Messages"], ["alerts", "Alerts"], ["settings", "Settings"]];
+const tabSets: Record<string, string[][]> = {
+  brand: [["home", "Overview"], ["creators", "UGC Creators"], ["freelancers", "Freelancers"], ["projects", "My Bookings"], ["payments", "Payments"], ["team", "Hire a Team"], ["messages", "Messages"], ["alerts", "Alerts"], ["settings", "Settings"]],
+  creator: [["home", "Overview"], ["jobs", "Bookings"], ["videos", "My Videos"], ["pricing", "Price & Availability"], ["earnings", "Earnings"], ["messages", "Messages"], ["alerts", "Alerts"], ["settings", "Settings"]],
+  freelancer: [["home", "Overview"], ["jobs", "Bookings"], ["profile", "Role & Experience"], ["services", "Services"], ["earnings", "Earnings"], ["messages", "Messages"], ["alerts", "Alerts"], ["settings", "Settings"]],
+};
 
 export default function Dashboard() {
   const [me, setMe] = useState<any>(null);
@@ -28,7 +31,7 @@ export default function Dashboard() {
   if (me.status === "suspended") return <main className="nf"><h1>Account suspended</h1><p>Please contact contact.brandcollaborator@gmail.com.</p></main>;
 
   const isBrand = me.role === "brand";
-  const tabs = isBrand ? brandTabs : talentTabs;
+  const tabs = tabSets[me.role];
   const roleLabel = isBrand ? "Brand" : me.role === "creator" ? "UGC Creator" : "Freelancer";
   const out = async () => { await supabase.auth.signOut(); window.location.href = "/"; };
 
@@ -46,8 +49,12 @@ export default function Dashboard() {
           <div><h1>{tabs.find(([k]) => k === tab)?.[1]}</h1><p className="muted">{me.full_name || me.email} · {roleLabel}</p></div>
         </header>
         <main>
-          {tab === "home" && (isBrand ? <BrandHome me={me} go={setTab} /> : <TalentHome me={me} go={setTab} />)}
-          {tab === "find" && <FindTalent me={me} />}
+          {tab === "home" && (isBrand ? <BrandHome me={me} go={setTab} /> : me.role === "creator" ? <CreatorHome me={me} go={setTab} /> : <FreelancerHome me={me} go={setTab} />)}
+          {tab === "creators" && <FindCreators me={me} />}
+          {tab === "freelancers" && <FindFreelancers me={me} />}
+          {tab === "payments" && <Payments me={me} />}
+          {tab === "videos" && <Videos me={me} />}
+          {tab === "pricing" && <Pricing me={me} />}
           {tab === "projects" && <Projects me={me} />}
           {tab === "team" && <HireTeam me={me} />}
           {tab === "jobs" && <Jobs me={me} />}

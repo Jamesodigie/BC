@@ -56,7 +56,7 @@ export function Users({ role }: { role: string }) {
             <div className="spread"><h3>{u.full_name || "No name"}</h3><Badge s={u.status} /></div>
             <p className="muted">{u.email}{u.phone ? ` · ${u.phone}` : ""}</p>
             <p className="muted small">Joined {date(u.created_at)}</p>
-            {u.talent && <><p>Approval: <Badge s={u.talent.approval} /></p>{u.talent.headline && <p className="muted">{u.talent.headline}</p>}{u.talent.bio && <p className="muted small">{u.talent.bio}</p>}</>}
+            {u.talent && <><p>Approval: <Badge s={u.talent.approval} /></p>{u.talent.kind === "creator" ? <p className="muted">{naira(u.talent.rate_kobo)} per video · {u.talent.delivery_days ?? "?"} days · {u.talent.availability ?? "No availability"} · {u.talent.video_urls?.length ?? 0} videos</p> : <p className="muted">{u.talent.role_title ?? "No role"} · {u.talent.years_experience ?? "?"} yrs · From {naira(u.talent.rate_kobo)}</p>}{u.talent.video_urls?.[0] && <video className="vid" src={u.talent.video_urls[0]} controls preload="metadata" playsInline />}{u.talent.bio && <p className="muted small">{u.talent.bio}</p>}</>}
             <div className="row">
               {u.talent && u.talent.approval !== "approved" && <button className="btn btn-blue" onClick={() => setApproval(u.id, "approved")}>Approve</button>}
               {u.talent && u.talent.approval !== "rejected" && <button className="btn btn-line" onClick={() => setApproval(u.id, "rejected")}>Reject</button>}

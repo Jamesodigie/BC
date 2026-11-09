@@ -10,87 +10,180 @@ const toKobo = (v: FormDataEntryValue | null) => Math.round(Number(v) * 100);
 
 function count(rows: any[] | null, ...s: string[]) { return rows ? rows.filter((r) => s.includes(r.status)).length : "…"; }
 
+const paidTotal = (rows: any[] | null) => rows ? naira(rows.filter((p) => p.paid_at).reduce((t, p) => t + Number(p.budget_kobo), 0)) : "…";
+const distinct = (rows: any[] | null, k: string) => rows ? new Set(rows.map((r) => r[k])).size : "…";
+const projSelect = "*, talent_profiles(display_name, kind, role_title)";
+
+function bookingLine(p: any) {
+  const d = p.details ?? {};
+  if (d.type === "ugc") return `${d.videos ?? 1} video${Number(d.videos) === 1 ? "" : "s"} · ${d.length ?? ""}`;
+  if (d.type === "freelance") return [d.role, d.duration].filter(Boolean).join(" · ");
+  return "";
+}
+
+function BookingMini({ p, who }: { p: any; who: string }) {
+  return (
+    <div className="mini"><div><strong>{who}</strong><p className="muted small">{bookingLine(p) || p.title}</p></div><Badge s={p.status} /></div>
+  );
+}
+
 export function BrandHome({ me, go }: P & { go: (t: string) => void }) {
-  const { rows } = useRows(() => supabase.from("projects").select("status").eq("brand_id", me.id), [me.id]);
-  const { rows: reqs } = useRows(() => supabase.from("hiring_requests").select("status").eq("brand_id", me.id), [me.id]);
+  const { rows } = useRows(() => supabase.from("projects").select(projSelect).eq("brand_id", me.id).order("created_at", { ascending: false }), [me.id]);
   return (
     <>
       <div className="stats-row">
-        <Stat label="Active projects" value={count(rows, "accepted", "in_progress")} />
-        <Stat label="Awaiting talent" value={count(rows, "requested")} />
-        <Stat label="Completed" value={count(rows, "completed")} />
-        <Stat label="Team requests" value={reqs ? reqs.length : "…"} />
+        <Stat label="People booked" value={distinct(rows, "talent_id")} />
+        <Stat label="Accepted" value={count(rows, "accepted", "in_progress", "completed")} />
+        <Stat label="Awaiting reply" value={count(rows, "requested")} />
+        <Stat label="Total paid" value={paidTotal(rows)} />
       </div>
-      <div className="panel quick"><h2>What would you like to do?</h2><div className="row"><button className="btn btn-blue" onClick={() => go("find")}>Find talent</button><button className="btn btn-line" onClick={() => go("team")}>Hire a team</button></div></div>
+      <div className="panel"><h2>Hire someone</h2><div className="row"><button className="btn btn-blue" onClick={() => go("creators")}>Book a UGC creator</button><button className="btn btn-blue" onClick={() => go("freelancers")}>Hire a freelancer</button><button className="btn btn-line" onClick={() => go("team")}>Request a team</button></div></div>
+      <div className="panel top-gap"><h2>Recent bookings</h2>{rows?.length === 0 && <p className="muted">You haven’t booked anyone yet.</p>}{(rows ?? []).slice(0, 5).map((p) => <BookingMini key={p.id} p={p} who={p.talent_profiles?.display_name ?? "Talent"} />)}</div>
     </>
   );
 }
 
-export function TalentHome({ me, go }: P & { go: (t: string) => void }) {
-  const { rows: t } = useRows(() => supabase.from("talent_profiles").select("approval, rating, review_count").eq("user_id", me.id), [me.id]);
-  const { rows } = useRows(() => supabase.from("projects").select("status").eq("talent_id", me.id), [me.id]);
-  const { rows: pay } = useRows(() => supabase.from("payouts").select("amount_kobo, status").eq("talent_id", me.id), [me.id]);
-  const a = t?.[0]?.approval;
+function ApprovalNotice({ t, go, fixTab }: { t: any; go: (s: string) => void; fixTab: string }) {
   const msg: Record<string, string> = {
-    pending_payment: "Complete your portfolio, then contact us about your ₦5,000 registration so we can review your profile.",
+    pending_payment: "Your ₦5,000 registration is outstanding. Contact us to complete it so we can review your profile and list you for brands.",
     pending_review: "Your profile is being reviewed. We’ll let you know soon.",
     rejected: "Your profile wasn’t approved. Please contact us for details.",
   };
+  if (!t || !msg[t.approval]) return null;
+  return <div className="notice"><p>{msg[t.approval]}</p><div className="row"><button className="btn btn-blue" onClick={() => go(fixTab)}>Update profile</button><Link className="btn btn-line" href="/contact?topic=Talent%20registration">Contact us</Link></div></div>;
+}
+
+function useTalent(me: any) {
+  const { rows: t, reload } = useRows(() => supabase.from("talent_profiles").select("*").eq("user_id", me.id), [me.id]);
+  const { rows } = useRows(() => supabase.from("projects").select("*").eq("talent_id", me.id).order("created_at", { ascending: false }), [me.id]);
+  const { rows: pay } = useRows(() => supabase.from("payouts").select("amount_kobo, status").eq("talent_id", me.id), [me.id]);
+  const earned = pay ? naira(pay.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount_kobo), 0)) : "…";
+  return { t: t?.[0], rows, earned, reload };
+}
+
+export function CreatorHome({ me, go }: P & { go: (t: string) => void }) {
+  const { t, rows, earned } = useTalent(me);
+  const videos = rows ? rows.filter((p) => !["cancelled", "rejected"].includes(p.status)).reduce((s, p) => s + Number(p.details?.videos ?? 1), 0) : "…";
   return (
     <>
-      {a && msg[a] && <div className="notice"><p>{msg[a]}</p><div className="row"><button className="btn btn-blue" onClick={() => go("profile")}>Update portfolio</button><Link className="btn btn-line" href="/contact?topic=Talent%20registration">Contact us</Link></div></div>}
+      <ApprovalNotice t={t} go={go} fixTab="pricing" />
+      {t && t.video_urls.length === 0 && <div className="notice"><p><strong>Upload your showcase video</strong> so brands can see your work.</p><div className="row"><button className="btn btn-blue" onClick={() => go("videos")}>Upload video</button></div></div>}
       <div className="stats-row">
-        <Stat label="Job requests" value={count(rows, "requested")} />
-        <Stat label="Ongoing" value={count(rows, "accepted", "in_progress")} />
-        <Stat label="Completed" value={count(rows, "completed")} />
-        <Stat label="Total earned" value={pay ? naira(pay.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount_kobo), 0)) : "…"} />
+        <Stat label="Brands that booked you" value={distinct(rows, "brand_id")} />
+        <Stat label="Videos ordered" value={videos} />
+        <Stat label="New requests" value={count(rows, "requested")} />
+        <Stat label="Total earned" value={earned} />
       </div>
-      {!!t?.[0]?.review_count && <div className="panel"><h2>Rating</h2><p>★ {Number(t[0].rating).toFixed(1)} from {t[0].review_count} reviews</p></div>}
+      <div className="panel">
+        <div className="spread"><h2>Your offer</h2><button className="textlink" onClick={() => go("pricing")}>Edit</button></div>
+        <div className="facts"><div><span>Price per video</span><strong>{naira(t?.rate_kobo)}</strong></div><div><span>Delivery</span><strong>{t?.delivery_days ? `${t.delivery_days} days` : "—"}</strong></div><div><span>Availability</span><strong>{t?.availability || "—"}</strong></div></div>
+      </div>
+      <div className="panel top-gap"><h2>Latest bookings</h2>{rows?.length === 0 && <p className="muted">No brands have booked you yet.</p>}{(rows ?? []).slice(0, 5).map((p) => <BookingMini key={p.id} p={p} who={p.brand_name ?? "Brand"} />)}</div>
     </>
   );
 }
 
-export function FindTalent({ me }: P) {
-  const [kind, setKind] = useState("all");
-  const [hire, setHire] = useState<any>(null);
-  const [done, setDone] = useState("");
-  const [err, setErr] = useState("");
-  const { rows, error } = useRows(() => supabase.from("talent_profiles").select("*").eq("approval", "approved").order("rating", { ascending: false }).limit(100));
-  const list = (rows ?? []).filter((t) => kind === "all" || t.kind === kind);
+export function FreelancerHome({ me, go }: P & { go: (t: string) => void }) {
+  const { t, rows, earned } = useTalent(me);
+  return (
+    <>
+      <ApprovalNotice t={t} go={go} fixTab="profile" />
+      <div className="stats-row">
+        <Stat label="Brands that booked you" value={distinct(rows, "brand_id")} />
+        <Stat label="New requests" value={count(rows, "requested")} />
+        <Stat label="Ongoing" value={count(rows, "accepted", "in_progress")} />
+        <Stat label="Total earned" value={earned} />
+      </div>
+      <div className="panel">
+        <div className="spread"><h2>Your profile</h2><button className="textlink" onClick={() => go("profile")}>Edit</button></div>
+        <div className="facts"><div><span>Role</span><strong>{t?.role_title || "—"}</strong></div><div><span>Experience</span><strong>{t?.years_experience != null ? `${t.years_experience} years` : "—"}</strong></div><div><span>Availability</span><strong>{t?.availability || "—"}</strong></div></div>
+      </div>
+      <div className="panel top-gap"><h2>Brands that booked you</h2>{rows?.length === 0 && <p className="muted">No brands have booked you yet.</p>}{(rows ?? []).slice(0, 8).map((p) => <BookingMini key={p.id} p={p} who={p.brand_name ?? "Brand"} />)}</div>
+    </>
+  );
+}
 
+function BookForm({ me, t, onCancel, onDone }: P & { t: any; onCancel: () => void; onDone: (m: string) => void }) {
+  const ugc = t.kind === "creator";
+  const [videos, setVideos] = useState(1);
+  const [err, setErr] = useState("");
+  const total = ugc && t.rate_kobo ? videos * t.rate_kobo : null;
   async function send(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     setErr("");
-    const { error } = await supabase.from("projects").insert({ brand_id: me.id, talent_id: hire.user_id, title: String(f.get("title")), brief: String(f.get("brief")), budget_kobo: toKobo(f.get("budget")) });
+    const budget = ugc && total ? total : toKobo(f.get("budget"));
+    if (!budget) return setErr("Please enter a budget.");
+    const details = ugc ? { type: "ugc", videos, length: f.get("length"), delivery_days: t.delivery_days } : { type: "freelance", role: f.get("role"), duration: f.get("duration") };
+    const { error } = await supabase.from("projects").insert({ brand_id: me.id, talent_id: t.user_id, title: String(f.get("title")), brief: String(f.get("brief")), budget_kobo: budget, details });
     if (error) return setErr("We couldn’t send this request. Please try again.");
-    setDone(`Request sent to ${hire.display_name}.`); setHire(null);
+    onDone(`Booking request sent to ${t.display_name}.`);
   }
+  return (
+    <form className="form" onSubmit={send}>
+      <label>Project title<input name="title" required maxLength={150} /></label>
+      {ugc ? <>
+        <label>Number of videos<input type="number" min="1" max="100" required inputMode="numeric" value={videos} onChange={(e) => setVideos(Math.max(1, Number(e.target.value) || 1))} /></label>
+        <label>Video length<select name="length" defaultValue="30 seconds"><option>15 seconds</option><option>30 seconds</option><option>60 seconds</option><option>Over 60 seconds</option></select></label>
+      </> : <>
+        <label>Role you need<input name="role" required defaultValue={t.role_title ?? ""} /></label>
+        <label>How long do you need them?<input name="duration" required placeholder="e.g. 2 weeks" /></label>
+      </>}
+      <label>Brief<textarea name="brief" required rows={4} maxLength={4000} /></label>
+      {total ? <p><strong>Total: {naira(total)}</strong></p> : <label>Budget (₦)<input name="budget" type="number" min="1" required inputMode="numeric" /></label>}
+      {err && <p className="form-error" role="alert">{err}</p>}
+      <div className="row"><button className="btn btn-blue">Send booking</button><button type="button" className="btn btn-line" onClick={onCancel}>Cancel</button></div>
+    </form>
+  );
+}
 
+function FindKind({ me, kind }: P & { kind: "creator" | "freelancer" }) {
+  const [hire, setHire] = useState("");
+  const [done, setDone] = useState("");
+  const [q, setQ] = useState("");
+  const { rows, error } = useRows(() => supabase.from("talent_profiles").select("*").eq("approval", "approved").eq("kind", kind).order("rating", { ascending: false }).limit(100), [kind]);
+  const list = (rows ?? []).filter((t) => [t.display_name, t.role_title, t.category, (t.skills ?? []).join(" ")].join(" ").toLowerCase().includes(q.toLowerCase()));
   return (
     <>
-      <div className="row filters">{[["all", "All"], ["creator", "UGC Creators"], ["freelancer", "Freelancers"]].map(([k, l]) => <button key={k} className={kind === k ? "chip on" : "chip"} onClick={() => setKind(k)}>{l}</button>)}</div>
+      <input className="search" placeholder={kind === "creator" ? "Search by name or niche" : "Search by name, role or skill"} aria-label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
       {done && <p className="form-ok" role="status">{done}</p>}
-      <Loading rows={rows && list} error={error} empty="No approved talent yet. Check back soon, or request a team." />
+      <Loading rows={rows && list} error={error} empty={kind === "creator" ? "No approved UGC creators yet." : "No approved freelancers yet."} />
       <div className="grid">
         {list.map((t) => (
           <article className="panel" key={t.user_id}>
-            <h3>{t.display_name}</h3>
-            <p className="muted">{t.kind === "creator" ? "UGC Creator" : "Freelancer"}{t.location ? ` · ${t.location}` : ""}</p>
-            {t.headline && <p>{t.headline}</p>}
-            <p className="muted">{t.rate_kobo ? `From ${naira(t.rate_kobo)}` : ""}{t.review_count ? ` ★ ${Number(t.rating).toFixed(1)}` : ""}</p>
-            {hire?.user_id === t.user_id ? (
-              <form className="form" onSubmit={send}>
-                <label>Project title<input name="title" required maxLength={150} /></label>
-                <label>Project brief<textarea name="brief" required rows={4} maxLength={4000} /></label>
-                <label>Budget (₦)<input name="budget" type="number" min="1" required inputMode="numeric" /></label>
-                {err && <p className="form-error" role="alert">{err}</p>}
-                <div className="row"><button className="btn btn-blue">Send request</button><button type="button" className="btn btn-line" onClick={() => setHire(null)}>Cancel</button></div>
-              </form>
-            ) : <button className="btn btn-blue" onClick={() => { setDone(""); setHire(t); }}>Hire</button>}
+            {kind === "creator" && t.video_urls?.[0] && <video className="vid" src={t.video_urls[0]} controls preload="metadata" playsInline />}
+            <div className="spread"><h3>{t.display_name}</h3>{t.review_count > 0 && <span>★ {Number(t.rating).toFixed(1)}</span>}</div>
+            {kind === "creator" ? (
+              <>
+                <p className="muted">{[t.category, t.location].filter(Boolean).join(" · ")}</p>
+                <div className="facts"><div><span>Per video</span><strong>{naira(t.rate_kobo)}</strong></div><div><span>Delivery</span><strong>{t.delivery_days ? `${t.delivery_days} days` : "—"}</strong></div></div>
+              </>
+            ) : (
+              <>
+                <p className="muted">{[t.role_title, t.location].filter(Boolean).join(" · ")}</p>
+                <div className="facts"><div><span>Experience</span><strong>{t.years_experience != null ? `${t.years_experience} yrs` : "—"}</strong></div><div><span>From</span><strong>{naira(t.rate_kobo)}</strong></div></div>
+                {!!t.skills?.length && <p className="muted small">{t.skills.join(", ")}</p>}
+              </>
+            )}
+            {t.availability && <p className="muted small">Available: {t.availability}</p>}
+            {hire === t.user_id ? <BookForm me={me} t={t} onCancel={() => setHire("")} onDone={(m) => { setDone(m); setHire(""); }} /> : <button className="btn btn-blue" onClick={() => { setDone(""); setHire(t.user_id); }}>{kind === "creator" ? "Book" : "Hire"}</button>}
           </article>
         ))}
       </div>
+    </>
+  );
+}
+export const FindCreators = ({ me }: P) => <FindKind me={me} kind="creator" />;
+export const FindFreelancers = ({ me }: P) => <FindKind me={me} kind="freelancer" />;
+
+export function Payments({ me }: P) {
+  const { rows, error } = useRows(() => supabase.from("projects").select(projSelect).eq("brand_id", me.id).in("status", ["accepted", "in_progress", "completed", "disputed"]).order("created_at", { ascending: false }), [me.id]);
+  const due = rows ? naira(rows.filter((p) => !p.paid_at).reduce((t, p) => t + Number(p.budget_kobo), 0)) : "…";
+  return (
+    <>
+      <div className="stats-row two-up"><Stat label="Total paid" value={paidTotal(rows)} /><Stat label="Awaiting payment" value={due} /></div>
+      <Loading rows={rows} error={error} empty="Payments appear here once someone accepts your booking." />
+      <div className="stack">{(rows ?? []).map((p) => <article className="panel spread" key={p.id}><div><strong>{p.talent_profiles?.display_name ?? "Talent"}</strong><p className="muted small">{p.title}</p><p className="muted small">{p.paid_at ? `Paid ${date(p.paid_at)}` : "Our team will contact you to arrange payment"}</p></div><div className="pay-right"><strong>{naira(p.budget_kobo)}</strong><Badge s={p.paid_at ? "paid" : "pending"} /></div></article>)}</div>
     </>
   );
 }
@@ -106,6 +199,12 @@ function Rate({ p, onDone }: { p: any; onDone: () => void }) {
   return <div className="row">{[1, 2, 3, 4, 5].map((i) => <button key={i} aria-label={`${i} stars`} className={i <= n ? "star on" : "star"} onClick={() => setN(i)}>★</button>)}<button className="btn btn-line" disabled={!n} onClick={save}>Rate</button></div>;
 }
 
+function Timeline({ p }: { p: any }) {
+  if (["cancelled", "rejected"].includes(p.status)) return null;
+  const steps = [["Requested", true], ["Accepted", p.status !== "requested"], ["Paid", !!p.paid_at], ["Completed", p.status === "completed"]] as const;
+  return <ol className="timeline">{steps.map(([l, on]) => <li key={l} className={on ? "on" : ""}>{l}</li>)}</ol>;
+}
+
 function ProjectCard({ p, side, reload }: { p: any; side: "brand" | "talent"; reload: () => void }) {
   const [err, setErr] = useState("");
   async function act(fn: () => PromiseLike<{ error: any }>) { setErr(""); const { error } = await fn(); if (error) setErr("That action isn’t available right now."); reload(); }
@@ -113,9 +212,11 @@ function ProjectCard({ p, side, reload }: { p: any; side: "brand" | "talent"; re
   return (
     <article className="panel">
       <div className="spread"><h3>{p.title}</h3><Badge s={p.status} /></div>
-      {side === "talent" && <p className="muted">From {p.brand_name ?? "Brand"}</p>}
+      <p className="muted">{side === "talent" ? `Brand: ${p.brand_name ?? "Brand"}` : `${p.talent_profiles?.kind === "creator" ? "UGC Creator" : "Freelancer"}: ${p.talent_profiles?.display_name ?? "Talent"}`}</p>
+      {bookingLine(p) && <p className="muted">{bookingLine(p)}</p>}
+      <Timeline p={p} />
       {p.brief && <p>{p.brief}</p>}
-      <p className="muted">Budget {naira(p.budget_kobo)}{side === "talent" ? ` · You receive ${naira(Math.floor(p.budget_kobo * 0.8))}` : ""} · {date(p.created_at)}</p>
+      <p className="muted">{side === "brand" && p.paid_at ? `Paid ${date(p.paid_at)} · ` : ""}Budget {naira(p.budget_kobo)}{side === "talent" ? ` · You receive ${naira(Math.floor(p.budget_kobo * 0.8))}` : ""} · {date(p.created_at)}</p>
       {p.status === "accepted" && !p.paid_at && <p className="muted">{side === "brand" ? "Accepted. Our team will contact you to arrange payment." : "Accepted. Work starts once payment is confirmed."}</p>}
       {p.cancel_reason && <p className="muted">Reason: {p.cancel_reason}</p>}
       {err && <p className="form-error" role="alert">{err}</p>}
@@ -133,13 +234,13 @@ function ProjectCard({ p, side, reload }: { p: any; side: "brand" | "talent"; re
 function ProjectList({ me, side }: P & { side: "brand" | "talent" }) {
   const [group, setGroup] = useState("active");
   const col = side === "brand" ? "brand_id" : "talent_id";
-  const { rows, reload, error } = useRows(() => supabase.from("projects").select("*").eq(col, me.id).order("created_at", { ascending: false }), [me.id]);
+  const { rows, reload, error } = useRows(() => supabase.from("projects").select(projSelect).eq(col, me.id).order("created_at", { ascending: false }), [me.id]);
   const map: Record<string, string[]> = { active: ["requested", "accepted", "in_progress", "disputed"], completed: ["completed"], cancelled: ["cancelled", "rejected"] };
   const list = (rows ?? []).filter((p) => map[group].includes(p.status));
   return (
     <>
       <div className="row filters">{Object.keys(map).map((k) => <button key={k} className={group === k ? "chip on" : "chip"} onClick={() => setGroup(k)}>{k[0].toUpperCase() + k.slice(1)}</button>)}</div>
-      <Loading rows={rows && list} error={error} empty={`No ${group} ${side === "brand" ? "projects" : "jobs"} yet.`} />
+      <Loading rows={rows && list} error={error} empty={`No ${group} bookings yet.`} />
       <div className="stack">{list.map((p) => <ProjectCard key={p.id} p={p} side={side} reload={reload} />)}</div>
     </>
   );
@@ -183,51 +284,123 @@ export function HireTeam({ me }: P) {
   );
 }
 
-export function Profile({ me }: P) {
-  const { rows, reload } = useRows(() => supabase.from("talent_profiles").select("*").eq("user_id", me.id), [me.id]);
+function useMyTalent(me: any) { return useRows(() => supabase.from("talent_profiles").select("*").eq("user_id", me.id), [me.id]); }
+
+function Photo({ me, t, reload, note }: P & { t: any; reload: () => void; note: (s: string) => void }) {
+  async function photo(file?: File) {
+    if (!file) return;
+    if (file.size > 5_000_000 || !file.type.startsWith("image/")) return note("Please choose an image under 5 MB.");
+    const path = `${me.id}/${Date.now()}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file);
+    if (error) return note("We couldn’t upload that photo.");
+    await supabase.from("talent_profiles").update({ avatar_url: supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl }).eq("user_id", me.id);
+    note("Photo updated."); reload();
+  }
+  return <div className="avatar-row">{t.avatar_url ? <img src={t.avatar_url} alt="" /> : <div className="avatar-blank" />}<label className="btn btn-line">Upload photo<input type="file" accept="image/*" hidden onChange={(e) => photo(e.target.files?.[0])} /></label></div>;
+}
+
+export function Pricing({ me }: P) {
+  const { rows, reload } = useMyTalent(me);
   const [note, setNote] = useState("");
   const t = rows?.[0];
   if (!t) return <p className="muted">Loading…</p>;
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const rate = String(f.get("rate"));
     const { error } = await supabase.from("talent_profiles").update({
-      display_name: f.get("name"), headline: f.get("headline"), bio: f.get("bio"), category: f.get("category"), location: f.get("location"),
-      skills: String(f.get("skills")).split(",").map((s) => s.trim()).filter(Boolean),
-      links: { portfolio: f.get("portfolio"), instagram: f.get("instagram"), tiktok: f.get("tiktok"), linkedin: f.get("linkedin") },
-      rate_kobo: rate ? toKobo(rate) : null, updated_at: new Date().toISOString(),
+      display_name: f.get("name"), rate_kobo: toKobo(f.get("price")), delivery_days: Number(f.get("delivery")), availability: f.get("availability"),
+      category: f.get("category"), location: f.get("location"), bio: f.get("bio"), links: { ...t.links, instagram: f.get("instagram"), tiktok: f.get("tiktok") }, updated_at: new Date().toISOString(),
     }).eq("user_id", me.id);
     setNote(error ? "We couldn’t save your changes." : "Saved.");
     reload();
   }
-  async function photo(file?: File) {
+  return (
+    <form className="panel form" onSubmit={save} key={t.updated_at}>
+      <div className="spread"><h2>Price and availability</h2><Badge s={t.approval} /></div>
+      <Photo me={me} t={t} reload={reload} note={setNote} />
+      <label>Display name<input name="name" required defaultValue={t.display_name} /></label>
+      <label>Price per video (₦)<input name="price" type="number" min="1" required inputMode="numeric" defaultValue={t.rate_kobo ? t.rate_kobo / 100 : ""} /></label>
+      <label>Days to produce a video<input name="delivery" type="number" min="1" max="365" required inputMode="numeric" defaultValue={t.delivery_days ?? ""} /></label>
+      <label>Availability<input name="availability" required defaultValue={t.availability ?? ""} /></label>
+      <label>Content niche<input name="category" defaultValue={t.category ?? ""} /></label>
+      <label>Location<input name="location" defaultValue={t.location ?? ""} /></label>
+      <label>Instagram<input name="instagram" defaultValue={t.links?.instagram ?? ""} /></label>
+      <label>TikTok<input name="tiktok" defaultValue={t.links?.tiktok ?? ""} /></label>
+      <label>About you<textarea name="bio" rows={4} maxLength={2000} defaultValue={t.bio ?? ""} /></label>
+      {note && <p className="muted" role="status">{note}</p>}
+      <button className="btn btn-blue">Save</button>
+    </form>
+  );
+}
+
+export function Videos({ me }: P) {
+  const { rows, reload } = useMyTalent(me);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const t = rows?.[0];
+  if (!t) return <p className="muted">Loading…</p>;
+  const urls: string[] = t.video_urls ?? [];
+  async function upload(file?: File) {
     if (!file) return;
-    if (file.size > 5_000_000 || !file.type.startsWith("image/")) return setNote("Please choose an image under 5 MB.");
-    const path = `${me.id}/${Date.now()}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file);
-    if (error) return setNote("We couldn’t upload that photo.");
-    const url = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
-    await supabase.from("talent_profiles").update({ avatar_url: url }).eq("user_id", me.id);
-    setNote("Photo updated."); reload();
+    if (!["video/mp4", "video/quicktime", "video/webm"].includes(file.type)) return setNote("Please choose an MP4, MOV or WebM video.");
+    if (file.size > 50 * 1024 * 1024) return setNote("Please choose a video under 50 MB.");
+    if (urls.length >= 5) return setNote("You can showcase up to 5 videos. Remove one first.");
+    setBusy(true); setNote("Uploading…");
+    const path = `${me.id}/${Date.now()}.${file.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "") || "mp4"}`;
+    const { error } = await supabase.storage.from("videos").upload(path, file, { contentType: file.type });
+    if (error) { setBusy(false); return setNote("We couldn’t upload that video. Please try again."); }
+    const url = supabase.storage.from("videos").getPublicUrl(path).data.publicUrl;
+    await supabase.from("talent_profiles").update({ video_urls: [...urls, url], updated_at: new Date().toISOString() }).eq("user_id", me.id);
+    setBusy(false); setNote("Video uploaded."); reload();
+  }
+  async function remove(url: string) {
+    await supabase.from("talent_profiles").update({ video_urls: urls.filter((u) => u !== url), updated_at: new Date().toISOString() }).eq("user_id", me.id);
+    const path = url.split("/videos/")[1];
+    if (path) await supabase.storage.from("videos").remove([decodeURIComponent(path)]);
+    reload();
+  }
+  return (
+    <>
+      <div className="panel"><h2>Showcase videos</h2><p className="muted">Brands watch these before booking you. Up to 5 videos, 50 MB each.</p><label className={busy ? "btn btn-blue disabled" : "btn btn-blue"}>{busy ? "Uploading…" : "Upload video"}<input type="file" accept="video/mp4,video/quicktime,video/webm" hidden disabled={busy} onChange={(e) => upload(e.target.files?.[0])} /></label>{note && <p className="muted" role="status">{note}</p>}</div>
+      {urls.length === 0 ? <div className="blank top-gap">No videos yet.</div> : <div className="grid top-gap">{urls.map((u) => <article className="panel" key={u}><video className="vid" src={u} controls preload="metadata" playsInline /><button className="btn btn-line" onClick={() => remove(u)}>Remove</button></article>)}</div>}
+    </>
+  );
+}
+
+export function Profile({ me }: P) {
+  const { rows, reload } = useMyTalent(me);
+  const [note, setNote] = useState("");
+  const t = rows?.[0];
+  if (!t) return <p className="muted">Loading…</p>;
+  async function save(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const price = String(f.get("price"));
+    const { error } = await supabase.from("talent_profiles").update({
+      display_name: f.get("name"), role_title: f.get("role"), years_experience: Number(f.get("years")), employment_type: f.get("employment"), availability: f.get("availability"),
+      skills: String(f.get("skills")).split(",").map((x) => x.trim()).filter(Boolean), rate_kobo: price ? toKobo(price) : null, location: f.get("location"), bio: f.get("bio"),
+      links: { ...t.links, portfolio: f.get("portfolio"), linkedin: f.get("linkedin") }, updated_at: new Date().toISOString(),
+    }).eq("user_id", me.id);
+    setNote(error ? "We couldn’t save your changes." : "Saved.");
+    reload();
   }
   return (
     <form className="panel form" onSubmit={save} key={t.updated_at}>
-      <div className="spread"><h2>Your portfolio</h2><Badge s={t.approval} /></div>
-      <div className="avatar-row">{t.avatar_url ? <img src={t.avatar_url} alt="" /> : <div className="avatar-blank" />}<label className="btn btn-line">Upload photo<input type="file" accept="image/*" hidden onChange={(e) => photo(e.target.files?.[0])} /></label></div>
+      <div className="spread"><h2>Role and experience</h2><Badge s={t.approval} /></div>
+      <Photo me={me} t={t} reload={reload} note={setNote} />
       <label>Display name<input name="name" required defaultValue={t.display_name} /></label>
-      <label>Headline<input name="headline" maxLength={120} defaultValue={t.headline ?? ""} /></label>
-      <label>About you<textarea name="bio" rows={4} maxLength={2000} defaultValue={t.bio ?? ""} /></label>
-      <label>Category<input name="category" defaultValue={t.category ?? ""} /></label>
+      <label>Your role<input name="role" required defaultValue={t.role_title ?? ""} /></label>
+      <label>Years of experience<input name="years" type="number" min="0" max="60" required inputMode="numeric" defaultValue={t.years_experience ?? ""} /></label>
       <label>Skills (separate with commas)<input name="skills" defaultValue={(t.skills ?? []).join(", ")} /></label>
+      <label>Work type<select name="employment" defaultValue={t.employment_type ?? "Remote"}><option>Remote</option><option>Onsite</option><option>Both</option></select></label>
+      <label>Starting price (₦)<input name="price" type="number" min="0" inputMode="numeric" defaultValue={t.rate_kobo ? t.rate_kobo / 100 : ""} /></label>
+      <label>Availability<input name="availability" defaultValue={t.availability ?? ""} /></label>
       <label>Location<input name="location" defaultValue={t.location ?? ""} /></label>
-      <label>Starting rate (₦)<input name="rate" type="number" min="0" inputMode="numeric" defaultValue={t.rate_kobo ? t.rate_kobo / 100 : ""} /></label>
       <label>Portfolio link<input name="portfolio" type="url" defaultValue={t.links?.portfolio ?? ""} /></label>
-      <label>Instagram<input name="instagram" defaultValue={t.links?.instagram ?? ""} /></label>
-      <label>TikTok<input name="tiktok" defaultValue={t.links?.tiktok ?? ""} /></label>
-      <label>LinkedIn<input name="linkedin" defaultValue={t.links?.linkedin ?? ""} /></label>
+      <label>LinkedIn<input name="linkedin" type="url" defaultValue={t.links?.linkedin ?? ""} /></label>
+      <label>About you<textarea name="bio" rows={4} maxLength={2000} defaultValue={t.bio ?? ""} /></label>
       {note && <p className="muted" role="status">{note}</p>}
-      <button className="btn btn-blue">Save portfolio</button>
+      <button className="btn btn-blue">Save</button>
     </form>
   );
 }
